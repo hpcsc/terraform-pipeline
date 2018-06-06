@@ -5,7 +5,6 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket         = "terraform-pipeline-state"
-    key            = "modules/nginx-{{ server_name }}"
     region         = "ap-southeast-1"
     dynamodb_table = "tf-state-lock"
   }
