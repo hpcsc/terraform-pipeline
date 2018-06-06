@@ -17,7 +17,8 @@ resource "aws_instance" "nginx_server" {
   key_name               = "hpcsc-terraform"
 
   tags {
-    Name = "terraform-example-${var.server_name}"
+    Name      = "terraform-example-${var.server_name}"
+    CreatedBy = "Terraform"
   }
 
   provisioner "remote-exec" {
