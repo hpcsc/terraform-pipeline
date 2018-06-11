@@ -10,8 +10,18 @@ terraform {
   }
 }
 
+data "aws_ami" "nginx_ami" {
+  most_recent = true
+
+  filter {
+    name = "nginx-terraform-pipeline-${var.packer_build_number}"
+  }
+
+  owners = ["self"]
+}
+
 resource "aws_instance" "nginx_server" {
-  ami                    = "ami-81cefcfd"
+  ami                    = "${data.aws_ami.nginx_ami.id}"
   instance_type          = "t2.micro"
   vpc_security_group_ids = ["${aws_security_group.nginx_security_group.id}"]
   key_name               = "hpcsc-terraform"
@@ -19,41 +29,5 @@ resource "aws_instance" "nginx_server" {
   tags {
     Name      = "terraform-example-${var.server_name}"
     CreatedBy = "Terraform"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo apt-get update",
-      "sudo apt-get install -y nginx",
-    ]
-
-    connection {
-      user        = "ubuntu"
-      private_key = "${file(var.private_key_path)}"
-      host        = "${self.public_ip}"
-    }
-  }
-
-  provisioner "file" {
-    source      = "files/index.html"
-    destination = "/tmp/nginx-index.html"
-
-    connection {
-      user        = "ubuntu"
-      private_key = "${file(var.private_key_path)}"
-      host        = "${self.public_ip}"
-    }
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo mv -f /tmp/nginx-index.html /var/www/html/index.html",
-    ]
-
-    connection {
-      user        = "ubuntu"
-      private_key = "${file(var.private_key_path)}"
-      host        = "${self.public_ip}"
-    }
   }
 }
