@@ -14,7 +14,8 @@ data "aws_ami" "nginx_ami" {
   most_recent = true
 
   filter {
-    name = "nginx-terraform-pipeline-${var.packer_build_number}"
+    name   = "name"
+    values = ["nginx-terraform-pipeline-${var.packer_build_number}"]
   }
 
   owners = ["self"]
