@@ -1,0 +1,52 @@
+format_version: 2
+pipelines:
+  TerraformCommit:
+    group: TerraformPipeline
+    label_template: "${PackerBuilt}.${COUNT}"
+    materials:
+      backend:
+        git: http://git-repo:3000/gogs/terraform-pipeline.git
+        branch: master
+      PackerBuilt:
+        pipeline: PackerCommit
+        stage: Build
+    stages:
+      - Validate:
+          jobs:
+            Validate:
+              tasks:
+                - exec:
+                    run_if: passed
+                    working_directory: modules/nginx
+                    command: /bin/sh
+                    arguments:
+                    - -c
+                    - terraform init -backend-config="key=modules/nginx-Test"
+                - exec:
+                    run_if: passed
+                    working_directory: modules/nginx
+                    command: /bin/sh
+                    arguments:
+                    - -c
+                    - terraform validate -var 'private_key_path=~/.ssh/hpcsc-terraform.pem' -var 'server_name=def' -var 'packer_build_number=1'
+      - Test:
+          jobs:
+            Test:
+              tasks:
+                - exec:
+                    run_if: passed
+                    working_directory: modules/nginx
+                    command: /bin/sh
+                    arguments:
+                    - -c
+                    - echo "testing"
+      - SyncToS3:
+          jobs:
+            Sync:
+              tasks:
+                - exec:
+                    run_if: passed
+                    command: /bin/sh
+                    arguments:
+                    - -c
+                    - scripts/sync-to-s3.sh modules/nginx ${GO_PIPELINE_LABEL}
